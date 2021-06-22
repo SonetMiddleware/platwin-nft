@@ -14,9 +14,11 @@ import './Math.sol';
 //////////////////////
 
 interface IFeeCollector {
-    function fixedAmountCollect(address payer) external;
+    // return fee amount
+    function fixedAmountCollect(address payer) external returns (uint);
 
-    function fixedRateCollect(address payer, uint volume) external;
+    // return fee amount
+    function fixedRateCollect(address payer, uint volume) external returns (uint);
 }
 
 contract FeeCollector is IFeeCollector, Ownable, Math {
@@ -59,21 +61,23 @@ contract FeeCollector is IFeeCollector, Ownable, Math {
         emit FixedRateFeeUpdated(nft, oldRate, rate);
     }
 
-    function fixedAmountCollect(address payer) public override {
+    function fixedAmountCollect(address payer) public override returns (uint) {
         uint amount = fixedAmountFee[msg.sender];
         if (amount > 0) {
             RPC.safeTransferFrom(payer, address(this), amount);
             emit FeeCollected(msg.sender, payer, amount);
         }
+        return amount;
     }
 
-    function fixedRateCollect(address payer, uint volume) public override {
+    function fixedRateCollect(address payer, uint volume) public override returns (uint){
         uint rate = fixedRateFee[msg.sender];
         uint amount = rate * volume / MULTIPLIER;
         if (amount > 0) {
             RPC.safeTransferFrom(payer, address(this), amount);
             emit FeeCollected(msg.sender, payer, amount);
         }
+        return amount;
     }
 
     function withdrawFee(address feeTo) public onlyOwner {
