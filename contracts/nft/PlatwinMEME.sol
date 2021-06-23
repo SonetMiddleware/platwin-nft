@@ -13,7 +13,10 @@ contract PlatwinMEME is ERC721, Ownable {
     uint public tokenIndex;
     string public baseURI;
 
+    bool public mintPaused;
+
     /* event */
+    event MintPaused(bool paused);
     event BaseURIUpdated(string oldURI, string newURI);
 
     constructor(IFeeCollector collector, string memory uri)ERC721("Platwin MEME", "PLATWIN-MEME") Ownable(){
@@ -21,9 +24,15 @@ contract PlatwinMEME is ERC721, Ownable {
         baseURI = uri;
     }
 
+    function pauseMint(bool paused) public onlyOwner {
+        mintPaused = paused;
+        emit MintPaused(paused);
+    }
+
     /// @notice everyone could mint Platwin MEME
     /// @notice we use a simple auto-increment tokenId
     function mint(address to) public {
+        require(!mintPaused, 'mint paused');
         feeCollector.fixedAmountCollect(msg.sender);
         _mint(to, tokenIndex);
         tokenIndex++;

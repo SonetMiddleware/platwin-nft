@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol';
-import './Math.sol';
 
 //////////////////////
 // 1. collect fee from NFT market, and NFT minting
@@ -21,7 +20,7 @@ interface IFeeCollector {
     function fixedRateCollect(address payer, uint volume) external returns (uint);
 }
 
-contract FeeCollector is IFeeCollector, Ownable, Math {
+contract FeeCollector is IFeeCollector, Ownable {
 
     using SafeERC20 for IERC20;
 
@@ -57,7 +56,7 @@ contract FeeCollector is IFeeCollector, Ownable, Math {
     function setFixedRateFee(address nft, uint rate) public onlyOwner {
         require(nft != address(0));
         uint oldRate = fixedRateFee[nft];
-        fixedAmountFee[nft] = rate;
+        fixedRateFee[nft] = rate;
         emit FixedRateFeeUpdated(nft, oldRate, rate);
     }
 
@@ -72,7 +71,7 @@ contract FeeCollector is IFeeCollector, Ownable, Math {
 
     function fixedRateCollect(address payer, uint volume) public override returns (uint){
         uint rate = fixedRateFee[msg.sender];
-        uint amount = rate * volume / MULTIPLIER;
+        uint amount = rate * volume / 1e18;
         if (amount > 0) {
             RPC.safeTransferFrom(payer, address(this), amount);
             emit FeeCollected(msg.sender, payer, amount);

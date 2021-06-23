@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {IFeeCollector} from '../FeeCollector.sol';
-import '../Math.sol';
 
 contract MarketState is Ownable {
     IFeeCollector public feeCollector;
