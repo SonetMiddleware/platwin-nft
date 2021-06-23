@@ -45,8 +45,8 @@ contract Market is IERC721Receiver, IERC1155Receiver, MarketState {
         }
         // record order
         ordersNum++;
-        orders[ordersNum] = Order(OrderStatus.INIT, tokenId, nft, is721, msg.sender, tokenAmount, tokenAmount,
-            minPrice, maxPrice, 0, startBlock, duration, new address[](0));
+        orders[ordersNum] = Order(OrderStatus.INIT, tokenId, nft, is721, msg.sender, tokenAmount, minPrice, maxPrice,
+            startBlock, duration, tokenAmount, 0, new address[](0));
         emit MakeOrder(ordersNum, msg.sender, nft, tokenId, tokenAmount);
         return ordersNum;
     }
@@ -61,7 +61,7 @@ contract Market is IERC721Receiver, IERC1155Receiver, MarketState {
         uint rpcAmount = price * amountOut;
         uint feeAmount = feeCollector.fixedRateCollect(msg.sender, rpcAmount);
         // if fee > rpcAmount, revert
-        RPC.safeTransferFrom(msg.sender, address(this), rpcAmount - feeAmount);
+        RPC.safeTransferFrom(msg.sender, order.seller, rpcAmount - feeAmount);
         // transfer nft out
         if (order.is721) {
             IERC721(order.nft).safeTransferFrom(address(this), msg.sender, order.tokenId);
@@ -84,7 +84,7 @@ contract Market is IERC721Receiver, IERC1155Receiver, MarketState {
     function cancelOrder(uint orderId) public returns (bool) {
         Order storage order = orders[orderId];
         // check order
-        require(msg.sender == order.seller);
+        require(msg.sender == order.seller, 'should be seller');
         require(order.status == OrderStatus.INIT || order.status == OrderStatus.PARTIAL_SOLD, 'illegal order status');
         // transfer asset out
         if (order.is721) {
@@ -118,6 +118,10 @@ contract Market is IERC721Receiver, IERC1155Receiver, MarketState {
                 return order.maxPrice - (order.maxPrice - order.minPrice) * (block.number - order.startBlock) / order.duration;
             }
         }
+    }
+
+    function orderBuyers(uint orderId) public view returns (address[] memory){
+        return orders[orderId].buyers;
     }
 
     // ERC165
