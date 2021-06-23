@@ -5,42 +5,14 @@ import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
 import '@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 import '@openzeppelin/contracts/token/ERC1155/IERC1155.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import {IFeeCollector} from '../FeeCollector.sol';
 import '../Math.sol';
+import {MarketState}from './MarketState.sol';
 
-contract Market is IERC721Receiver, IERC1155Receiver, Ownable {
+contract Market is IERC721Receiver, IERC1155Receiver, MarketState {
 
     using SafeERC20 for IERC20;
-
-    IFeeCollector public feeCollector;
-    IERC20 public RPC;
-
-    enum OrderStatus{INIT, PARTIAL_SOLD, SOLD, PARTIAL_SOLD_CANCELED, CANCELED}
-
-    struct Order {
-        OrderStatus status;
-        uint tokenId;
-        address nft; // ERC721 or ERC1155
-        bool is721;
-
-        address seller;
-        uint initAmount;
-        uint minPrice;
-        uint maxPrice;
-        uint startBlock;
-        uint duration; // blocks
-
-        uint amount; // remained amount
-        uint finalPrice; // the price of order when NFT is sold, if there are no buyers, the final price is 0
-        address[] buyers;
-    }
-
-    uint public ordersNum;
-    mapping(uint => Order) public orders;
-
-    mapping(address => bool) public supportedNFT;
 
     /* event */
     event SetSupportedNFT(address nft, bool supported);
@@ -48,9 +20,7 @@ contract Market is IERC721Receiver, IERC1155Receiver, Ownable {
     event TakeOrder(uint orderId, address buyer, address nft, uint tokenId, uint amount, uint rpcAmount);
     event CancelOrder(uint orderId, address nft, uint tokenId, uint remains);
 
-    constructor(IFeeCollector collector, IERC20 rpc)Ownable(){
-        feeCollector = collector;
-        RPC = rpc;
+    constructor()MarketState(IFeeCollector(address(0)), IERC20(address(0))){
     }
 
     function setSupportedNFT(address nft, bool supported) public onlyOwner {
