@@ -1,6 +1,8 @@
 require("@nomiclabs/hardhat-waffle");
-require("@nomiclabs/hardhat-web3");
+const env = require('./.env.json');
 
+INFURO_API_KEY = env.INFURO;
+PRIV = env.PRIVATE_KEY;
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
@@ -10,6 +12,12 @@ module.exports = {
         optimizer: {
             enabled: true,
             runs: 1000
+        }
+    },
+    networks: {
+        ropsten: {
+            url: `https://ropsten.infura.io/v3/${INFURO_API_KEY}`,
+            accounts: [`0x${PRIV}`]
         }
     }
 };
