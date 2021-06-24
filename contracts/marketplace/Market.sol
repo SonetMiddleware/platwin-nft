@@ -55,6 +55,7 @@ contract Market is IERC721Receiver, IERC1155Receiver, MarketState {
         Order storage order = orders[orderId];
         // check order
         require(amountOut <= order.amount, 'insufficient amountOut');
+        require(amountOut > 0, 'illegal amountOut');
         require(order.status == OrderStatus.INIT || order.status == OrderStatus.PARTIAL_SOLD, 'illegal order status');
         // transfer asset in
         uint price = getPrice(orderId);

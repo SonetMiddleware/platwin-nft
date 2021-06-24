@@ -2,5 +2,4 @@
 
 ## TODO List
 
-- mint semi-NFT;
-- test & deploy scripts;
+- deploy scripts;
