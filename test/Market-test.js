@@ -278,4 +278,10 @@ describe('Platwin NFT Market', function () {
         expect(buyers.length).to.equal(1);
         expect(buyers[0]).to.equal(owner.address);
     });
+    it('market upgrade', async function (){
+        const Market = await ethers.getContractFactory("Market");
+        marketLogic = await Market.deploy();
+        await marketState.updateTo(marketLogic.address);
+        expect(await marketState.implementation()).to.equal(marketLogic.address);
+    });
 });
