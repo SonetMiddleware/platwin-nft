@@ -60,9 +60,7 @@ contract Market is IERC721Receiver, IERC1155Receiver, MarketState {
         // transfer asset in
         uint price = getPrice(orderId);
         uint rpcAmount = price * amountOut;
-        uint feeAmount = feeCollector.fixedRateCollect(msg.sender, rpcAmount);
-        // if fee > rpcAmount, revert
-        RPC.safeTransferFrom(msg.sender, order.seller, rpcAmount - feeAmount);
+        feeCollector.spendRPCWithFixedRateFee(msg.sender, order.seller, rpcAmount);
         // transfer nft out
         if (order.is721) {
             IERC721(order.nft).safeTransferFrom(address(this), msg.sender, order.tokenId);

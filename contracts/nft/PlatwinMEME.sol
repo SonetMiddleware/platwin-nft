@@ -33,13 +33,13 @@ contract PlatwinMEME is ERC721, Ownable {
     /// @notice we use a simple auto-increment tokenId
     function mint(address to) public {
         require(!mintPaused, 'mint paused');
-        feeCollector.fixedAmountCollect(msg.sender);
+        feeCollector.spendRPCWithFixedAmountFee(msg.sender);
         _mint(to, tokenIndex);
         tokenIndex++;
     }
 
     function safeMint(address to) public {
-        feeCollector.fixedAmountCollect(msg.sender);
+        feeCollector.spendRPCWithFixedAmountFee(msg.sender);
         _safeMint(to, tokenIndex);
         tokenIndex++;
     }

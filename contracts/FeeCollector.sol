@@ -2,86 +2,104 @@
 pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/access/Ownable.sol';
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol';
+import './interfaces/IResPublicaAsset.sol';
+import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import {ERC20Burnable} from '@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol';
 
 //////////////////////
 // 1. collect fee from NFT market, and NFT minting
 // 2. fee is [RPC](Res Publica Cash)
 // 3. administer fee rate of all actions
 // 4. use collector to charge, users could approve RPC only once for all actions
+// 5. payment comprised by [burned, tax, applicationFee, to]
 //////////////////////
 
 interface IFeeCollector {
-    // return fee amount
-    function fixedAmountCollect(address payer) external returns (uint);
+    // return the amount of fee collected
+    function spendRPCWithFixedAmountFee(address payer) external returns (uint);
 
-    // return fee amount
-    function fixedRateCollect(address payer, uint volume) external returns (uint);
+    // return the amount of fee collected and `to` received
+    function spendRPCWithFixedRateFee(address payer, address recipient, uint volume) external returns (uint, uint);
 }
 
 contract FeeCollector is IFeeCollector, Ownable {
-
     using SafeERC20 for IERC20;
 
-    /// @dev fee amount is fixed, such as NFT mint
-    /// @dev contract => fee amount
-    mapping(address => uint) public fixedAmountFee;
-    /// @dev fee rate is fixed, such as NFT trading
-    /// @dev contract => fee rate
-    mapping(address => uint) public fixedRateFee;
+    IResPublicaCash public RPC;
 
-    IERC20 public RPC;
+    struct FeeCfg {
+        uint amountOrRate;
+        uint burnRate;
+    }
+    /// @dev fee amount is fixed, such as NFT mint
+    /// @dev contract => fee config with fixed amount
+    mapping(address => FeeCfg) public fixedAmountFee;
+    /// @dev fee rate is fixed, such as NFT trading
+    /// @dev contract => fee config with fixed rate
+    mapping(address => FeeCfg) public fixedRateFee;
 
     /* event */
-    event FixedAmountFeeUpdated(address nft, uint oldAmount, uint amount);
-    event FixedRateFeeUpdated(address market, uint oldRate, uint rate);
+    event FixedAmountFeeUpdated(address nft, uint amount, uint burnRate);
+    event FixedRateFeeUpdated(address market, uint feeRate, uint burnRate);
     event FeeCollected(address market, address payer, uint amount);
     event WithdrawFee(address feeTo, uint amount);
     event BurnFee(uint amount);
 
-    constructor(IERC20 _RPC){
+    constructor(IResPublicaCash _RPC){
         RPC = _RPC;
     }
 
     /* admin functions */
 
-    function setFixedAmountFee(address nft, uint amount) public onlyOwner {
-        require(nft != address(0));
-        uint oldAmount = fixedAmountFee[nft];
-        fixedAmountFee[nft] = amount;
-        emit FixedAmountFeeUpdated(nft, oldAmount, amount);
+    function setFixedAmountFee(address app, uint amount, uint burnRate) public onlyOwner {
+        require(app != address(0), 'illegal application contract');
+        require(burnRate >= RPC.globalBurnRate(), 'illegal burn rate');
+        fixedAmountFee[app].amountOrRate = amount;
+        fixedAmountFee[app].burnRate = burnRate;
+        emit FixedAmountFeeUpdated(app, amount, burnRate);
     }
 
-    function setFixedRateFee(address nft, uint rate) public onlyOwner {
-        require(nft != address(0));
-        uint oldRate = fixedRateFee[nft];
-        fixedRateFee[nft] = rate;
-        emit FixedRateFeeUpdated(nft, oldRate, rate);
+    function setFixedRateFee(address nft, uint feeRate, uint burnRate) public onlyOwner {
+        require(nft != address(0), 'illegal application contract');
+        require(burnRate >= RPC.globalBurnRate(), 'illegal burn rate');
+        fixedAmountFee[nft].amountOrRate = feeRate;
+        fixedAmountFee[nft].burnRate = burnRate;
+        emit FixedRateFeeUpdated(nft, feeRate, burnRate);
     }
 
-    function fixedAmountCollect(address payer) public override returns (uint) {
-        uint amount = fixedAmountFee[msg.sender];
-        if (amount > 0) {
-            RPC.safeTransferFrom(payer, address(this), amount);
-            emit FeeCollected(msg.sender, payer, amount);
+    function spendRPCWithFixedAmountFee(address payer) public override returns (uint feeCollected) {
+        FeeCfg storage cfg = fixedAmountFee[msg.sender];
+        if (cfg.amountOrRate > 0) {
+            feeCollected = spend(payer, cfg.amountOrRate, cfg.burnRate);
+            emit FeeCollected(msg.sender, payer, feeCollected);
         }
-        return amount;
     }
 
-    function fixedRateCollect(address payer, uint volume) public override returns (uint){
-        uint rate = fixedRateFee[msg.sender];
-        uint amount = rate * volume / 1e18;
-        if (amount > 0) {
-            RPC.safeTransferFrom(payer, address(this), amount);
-            emit FeeCollected(msg.sender, payer, amount);
+    function spendRPCWithFixedRateFee(address payer, address recipient, uint volume)
+    public override returns (uint feeCollected, uint recipientReceived){
+        if (volume > 0) {
+            FeeCfg storage cfg = fixedAmountFee[msg.sender];
+            uint received = spend(payer, volume, cfg.burnRate);
+            uint feeRate = cfg.amountOrRate;
+            feeCollected = feeRate * received / 1e18;
+            recipientReceived = received - feeCollected;
+            IERC20(RPC).safeTransfer(recipient, recipientReceived);
+            emit FeeCollected(msg.sender, payer, feeCollected);
         }
-        return amount;
+    }
+
+    // spend rpc to self, return received RPC num
+    function spend(address payer, uint amount, uint burnRate) internal returns (uint){
+        address self = address(this);
+        uint balanceBefore = RPC.balanceOf(self);
+        RPC.spend(payer, self, amount, burnRate);
+        uint balanceAfter = RPC.balanceOf(self);
+        return balanceAfter - balanceBefore;
     }
 
     function withdrawFee(address feeTo) public onlyOwner {
         uint balance = RPC.balanceOf(address(this));
-        RPC.safeTransfer(feeTo, balance);
+        IERC20(RPC).safeTransfer(feeTo, balance);
         emit WithdrawFee(feeTo, balance);
     }
 
