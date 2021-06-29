@@ -3,10 +3,10 @@ pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import {IFeeCollector} from '../FeeCollector.sol';
+import {IRPCRouter} from '../RPCRouter.sol';
 
 contract MarketState is Ownable {
-    IFeeCollector public feeCollector;
+    IRPCRouter public rpcRouter;
     IERC20 public RPC;
 
     enum OrderStatus{INIT, PARTIAL_SOLD, SOLD, PARTIAL_SOLD_CANCELED, CANCELED}
@@ -34,8 +34,8 @@ contract MarketState is Ownable {
 
     mapping(address => bool) public supportedNFT;
 
-    constructor(IFeeCollector collector, IERC20 rpc)Ownable(){
-        feeCollector = collector;
+    constructor(IRPCRouter router, IERC20 rpc)Ownable(){
+        rpcRouter = router;
         RPC = rpc;
     }
 }

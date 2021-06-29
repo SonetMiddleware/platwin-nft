@@ -3,12 +3,12 @@ pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
-import {IFeeCollector} from '../FeeCollector.sol';
+import {IRPCRouter} from '../RPCRouter.sol';
 
 /// @dev MEME is Platwin NFT example, maybe some emoji, some cop?
 contract PlatwinMEME is ERC721, Ownable {
 
-    IFeeCollector public feeCollector;
+    IRPCRouter public rpcRouter;
 
     uint public tokenIndex;
     string public baseURI;
@@ -19,8 +19,8 @@ contract PlatwinMEME is ERC721, Ownable {
     event MintPaused(bool paused);
     event BaseURIUpdated(string oldURI, string newURI);
 
-    constructor(IFeeCollector collector, string memory uri)ERC721("Platwin MEME", "PLATWIN-MEME") Ownable(){
-        feeCollector = collector;
+    constructor(IRPCRouter router, string memory uri)ERC721("Platwin MEME", "PLATWIN-MEME") Ownable(){
+        rpcRouter = router;
         baseURI = uri;
     }
 
@@ -33,13 +33,13 @@ contract PlatwinMEME is ERC721, Ownable {
     /// @notice we use a simple auto-increment tokenId
     function mint(address to) public {
         require(!mintPaused, 'mint paused');
-        feeCollector.spendRPCWithFixedAmountFee(msg.sender);
+        rpcRouter.spendRPCWithFixedAmountFee(msg.sender);
         _mint(to, tokenIndex);
         tokenIndex++;
     }
 
     function safeMint(address to) public {
-        feeCollector.spendRPCWithFixedAmountFee(msg.sender);
+        rpcRouter.spendRPCWithFixedAmountFee(msg.sender);
         _safeMint(to, tokenIndex);
         tokenIndex++;
     }

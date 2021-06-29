@@ -6,7 +6,7 @@ import '@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 import '@openzeppelin/contracts/token/ERC1155/IERC1155.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import {IFeeCollector} from '../FeeCollector.sol';
+import {IRPCRouter} from '../RPCRouter.sol';
 import {MarketState}from './MarketState.sol';
 
 contract Market is IERC721Receiver, IERC1155Receiver, MarketState {
@@ -19,7 +19,7 @@ contract Market is IERC721Receiver, IERC1155Receiver, MarketState {
     event TakeOrder(uint orderId, address buyer, address nft, uint tokenId, uint amount, uint rpcAmount);
     event CancelOrder(uint orderId, address nft, uint tokenId, uint remains);
 
-    constructor()MarketState(IFeeCollector(address(0)), IERC20(address(0))){
+    constructor()MarketState(IRPCRouter(address(0)), IERC20(address(0))){
     }
 
     function setSupportedNFT(address nft, bool supported) public onlyOwner {
@@ -60,7 +60,7 @@ contract Market is IERC721Receiver, IERC1155Receiver, MarketState {
         // transfer asset in
         uint price = getPrice(orderId);
         uint rpcAmount = price * amountOut;
-        feeCollector.spendRPCWithFixedRateFee(msg.sender, order.seller, rpcAmount);
+        rpcRouter.spendRPCWithFixedRateFee(msg.sender, order.seller, rpcAmount);
         // transfer nft out
         if (order.is721) {
             IERC721(order.nft).safeTransferFrom(address(this), msg.sender, order.tokenId);

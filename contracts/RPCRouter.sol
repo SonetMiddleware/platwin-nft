@@ -10,11 +10,11 @@ import {ERC20Burnable} from '@openzeppelin/contracts/token/ERC20/extensions/ERC2
 // 1. collect fee from NFT market, and NFT minting
 // 2. fee is [RPC](Res Publica Cash)
 // 3. administer fee rate of all actions
-// 4. use collector to charge, users could approve RPC only once for all actions
+// 4. use router to charge, users could approve RPC only once for all actions
 // 5. payment comprised by [burned, tax, applicationFee, to]
 //////////////////////
 
-interface IFeeCollector {
+interface IRPCRouter {
     // return the amount of fee collected
     function spendRPCWithFixedAmountFee(address payer) external returns (uint);
 
@@ -22,7 +22,7 @@ interface IFeeCollector {
     function spendRPCWithFixedRateFee(address payer, address recipient, uint volume) external returns (uint, uint);
 }
 
-contract FeeCollector is IFeeCollector, Ownable {
+contract RPCRouter is IRPCRouter, Ownable {
     using SafeERC20 for IERC20;
 
     IResPublicaCash public RPC;
@@ -62,8 +62,8 @@ contract FeeCollector is IFeeCollector, Ownable {
     function setFixedRateFee(address nft, uint feeRate, uint burnRate) public onlyOwner {
         require(nft != address(0), 'illegal application contract');
         require(burnRate >= RPC.globalBurnRate(), 'illegal burn rate');
-        fixedAmountFee[nft].amountOrRate = feeRate;
-        fixedAmountFee[nft].burnRate = burnRate;
+        fixedRateFee[nft].amountOrRate = feeRate;
+        fixedRateFee[nft].burnRate = burnRate;
         emit FixedRateFeeUpdated(nft, feeRate, burnRate);
     }
 
@@ -78,10 +78,10 @@ contract FeeCollector is IFeeCollector, Ownable {
     function spendRPCWithFixedRateFee(address payer, address recipient, uint volume)
     public override returns (uint feeCollected, uint recipientReceived){
         if (volume > 0) {
-            FeeCfg storage cfg = fixedAmountFee[msg.sender];
+            FeeCfg storage cfg = fixedRateFee[msg.sender];
             uint received = spend(payer, volume, cfg.burnRate);
             uint feeRate = cfg.amountOrRate;
-            feeCollected = feeRate * received / 1e18;
+            feeCollected = received * feeRate / 1e18;
             recipientReceived = received - feeCollected;
             IERC20(RPC).safeTransfer(recipient, recipientReceived);
             emit FeeCollected(msg.sender, payer, feeCollected);
