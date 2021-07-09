@@ -1,10 +1,10 @@
 async function main() {
     const MockRPC = await ethers.getContractFactory("MockRPC");
     let rpc = await MockRPC.deploy();
-    const FeeCollector = await ethers.getContractFactory("FeeCollector");
-    let collector = await FeeCollector.deploy(rpc.address);
+    const RPCRouter = await ethers.getContractFactory("RPCRouter");
+    let router = await RPCRouter.deploy(rpc.address);
     const PlatwinMEME = await ethers.getContractFactory("PlatwinMEME");
-    let meme = await PlatwinMEME.deploy(collector.address, "http://api.platwin.io/v1/meme/");
+    let meme = await PlatwinMEME.deploy(router.address, "http://api.platwin.io/v1/meme/");
     const PlatwinBatchMeme = await ethers.getContractFactory("PlatwinBatchMEME");
     let batchMeme = await PlatwinBatchMeme.deploy();
 
@@ -12,11 +12,11 @@ async function main() {
     const Market = await ethers.getContractFactory("Market");
     let marketLogic = await Market.deploy();
     const MarketProxy = await ethers.getContractFactory("MarketProxy");
-    let marketState = await MarketProxy.deploy(marketLogic.address, Buffer.from(''), collector.address, rpc.address);
+    let marketState = await MarketProxy.deploy(marketLogic.address, Buffer.from(''), router.address, rpc.address);
 
     let deployments = {
         MockRPC: rpc.address,
-        FeeCollector: collector.address,
+        RPCRouter: router.address,
         PlatwinMEME: meme.address,
         PlatwinBatchMeme: batchMeme.address,
         Market: marketLogic.address,
