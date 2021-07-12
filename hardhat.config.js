@@ -24,6 +24,10 @@ module.exports = {
         kovan: {
             url: `https://kovan.infura.io/v3/${INFURO_API_KEY}`,
             accounts: [`0x${PRIV}`]
+        },
+        bsc_testnet: {
+            url: `https://data-seed-prebsc-1-s3.binance.org:8545/`,
+            accounts: [`0x${PRIV}`]
         }
     }
 };
