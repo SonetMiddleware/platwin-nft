@@ -20,6 +20,10 @@ module.exports = {
         ropsten: {
             url: `https://ropsten.infura.io/v3/${INFURO_API_KEY}`,
             accounts: [`0x${PRIV}`]
+        },
+        kovan: {
+            url: `https://kovan.infura.io/v3/${INFURO_API_KEY}`,
+            accounts: [`0x${PRIV}`]
         }
     }
 };

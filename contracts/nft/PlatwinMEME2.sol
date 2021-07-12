@@ -6,22 +6,23 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 import {IRPCRouter} from '../RPCRouter.sol';
 
 /// @dev MEME is Platwin NFT example, maybe some emoji, some cop?
-contract PlatwinMEME is ERC721, Ownable {
+/// @dev use IPFS to store NFT resource, so we specify uri when user mint nft
+contract PlatwinMEME2 is ERC721, Ownable {
 
     IRPCRouter public rpcRouter;
 
     uint public tokenIndex;
-    string public baseURI;
 
     bool public mintPaused;
+
+    mapping(uint => string) private tokenUri;
 
     /* event */
     event MintPaused(bool paused);
     event BaseURIUpdated(string oldURI, string newURI);
 
-    constructor(IRPCRouter router, string memory uri)ERC721("Platwin MEME", "PLATWIN-MEME") Ownable(){
+    constructor(IRPCRouter router)ERC721("Platwin MEME", "PLATWIN-MEME") Ownable(){
         rpcRouter = router;
-        baseURI = uri;
     }
 
     function pauseMint(bool paused) public onlyOwner {
@@ -31,27 +32,25 @@ contract PlatwinMEME is ERC721, Ownable {
 
     /// @notice everyone could mint Platwin MEME
     /// @notice we use a simple auto-increment tokenId
-    function mint(address to) public {
+    function mint(address to, string memory uri) public {
         require(!mintPaused, 'mint paused');
         rpcRouter.spendRPCWithFixedAmountFee(msg.sender);
         _mint(to, tokenIndex);
+        tokenUri[tokenIndex] = uri;
         tokenIndex++;
     }
 
-    function safeMint(address to) public {
+    function safeMint(address to, string memory uri) public {
         require(!mintPaused, 'mint paused');
         rpcRouter.spendRPCWithFixedAmountFee(msg.sender);
         _safeMint(to, tokenIndex);
+        tokenUri[tokenIndex] = uri;
         tokenIndex++;
     }
-
-    function setBaseURI(string memory newBaseURI) public onlyOwner {
-        string memory oldURI = baseURI;
-        baseURI = newBaseURI;
-        emit BaseURIUpdated(oldURI, newBaseURI);
-    }
-
-    function _baseURI() internal override view returns (string memory){
-        return baseURI;
+    /**
+     * @dev See {IERC721Metadata-tokenURI}.
+     */
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+        return tokenUri[tokenId];
     }
 }
