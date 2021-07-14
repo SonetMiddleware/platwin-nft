@@ -28,6 +28,11 @@ module.exports = {
         bsc_testnet: {
             url: `https://data-seed-prebsc-1-s3.binance.org:8545/`,
             accounts: [`0x${PRIV}`]
+        },
+        mumbai: {
+            url: 'https://matic-mumbai.chainstacklabs.com',
+            accounts: [`0x${PRIV}`],
+            gasPrice: 1000000000
         }
     }
 };
