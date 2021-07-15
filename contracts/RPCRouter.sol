@@ -30,6 +30,7 @@ contract RPCRouter is IRPCRouter, Ownable {
     struct FeeCfg {
         uint amountOrRate;
         uint burnRate;
+        bool initialized;
     }
     /// @dev fee amount is fixed, such as NFT mint
     /// @dev contract => fee config with fixed amount
@@ -56,6 +57,7 @@ contract RPCRouter is IRPCRouter, Ownable {
         require(burnRate >= RPC.globalBurnRate(), 'illegal burn rate');
         fixedAmountFee[app].amountOrRate = amount;
         fixedAmountFee[app].burnRate = burnRate;
+        fixedAmountFee[app].initialized = true;
         emit FixedAmountFeeUpdated(app, amount, burnRate);
     }
 
@@ -64,11 +66,13 @@ contract RPCRouter is IRPCRouter, Ownable {
         require(burnRate >= RPC.globalBurnRate(), 'illegal burn rate');
         fixedRateFee[nft].amountOrRate = feeRate;
         fixedRateFee[nft].burnRate = burnRate;
+        fixedRateFee[nft].initialized = true;
         emit FixedRateFeeUpdated(nft, feeRate, burnRate);
     }
 
     function spendRPCWithFixedAmountFee(address payer) public override returns (uint feeCollected) {
         FeeCfg storage cfg = fixedAmountFee[msg.sender];
+        require(cfg.initialized, 'msg.sender has not permission');
         if (cfg.amountOrRate > 0) {
             feeCollected = spend(payer, cfg.amountOrRate, cfg.burnRate);
             emit FeeCollected(msg.sender, payer, feeCollected);
@@ -79,6 +83,7 @@ contract RPCRouter is IRPCRouter, Ownable {
     public override returns (uint feeCollected, uint recipientReceived){
         if (volume > 0) {
             FeeCfg storage cfg = fixedRateFee[msg.sender];
+            require(cfg.initialized, 'msg.sender has not permission');
             uint received = spend(payer, volume, cfg.burnRate);
             uint feeRate = cfg.amountOrRate;
             feeCollected = received * feeRate / 1e18;

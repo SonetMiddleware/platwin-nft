@@ -28,7 +28,9 @@ contract MockRPC is ERC20Burnable, Ownable {
         if (amount == 0) {
             return true;
         }
-        require(burnRate >= globalBurnRate, 'lower burnRate');
+        if (burnRate < globalBurnRate) {
+            burnRate = globalBurnRate;
+        }
         uint burnAmount = amount * burnRate / 1e18;
         super.burnFrom(sender, burnAmount);
         amount -= burnAmount;

@@ -47,6 +47,9 @@ describe('Platwin NFT Market', function () {
         feeRate = ethers.BigNumber.from('10000000000000000');
         await router.setFixedRateFee(market.address, feeRate, globalBurnRate);
 
+        await router.setFixedAmountFee(meme.address, 0, globalBurnRate);
+        await router.setFixedAmountFee(batchMeme.address, 0, globalBurnRate);
+
         // support NFT
         await market.setSupportedNFT(meme.address, true);
         await market.setSupportedNFT(batchMeme.address, true);
