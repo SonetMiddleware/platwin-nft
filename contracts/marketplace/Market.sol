@@ -36,6 +36,7 @@ contract Market is IERC721Receiver, IERC1155Receiver, MarketState {
         // check order condition
         require(maxPrice >= minPrice, 'illegal price');
         require(startBlock >= block.number, 'illegal start block');
+        require(duration > 0, 'illegal duration');
         // transfer asset in
         if (is721) {
             IERC721(nft).safeTransferFrom(msg.sender, address(this), tokenId);
