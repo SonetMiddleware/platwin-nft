@@ -15,6 +15,8 @@ contract PlatwinMEME is ERC721, Ownable {
 
     bool public mintPaused;
 
+    mapping(uint => address) public minter;
+
     /* event */
     event MintPaused(bool paused);
     event BaseURIUpdated(string oldURI, string newURI);
@@ -35,6 +37,7 @@ contract PlatwinMEME is ERC721, Ownable {
         require(!mintPaused, 'mint paused');
         rpcRouter.spendRPCWithFixedAmountFee(msg.sender);
         _mint(to, tokenIndex);
+        minter[tokenIndex] = msg.sender;
         tokenIndex++;
     }
 

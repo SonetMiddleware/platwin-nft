@@ -17,6 +17,8 @@ contract PlatwinMEME2 is ERC721, Ownable {
 
     mapping(uint => string) private tokenUri;
 
+    mapping(uint => address) public minter;
+
     /* event */
     event MintPaused(bool paused);
     event BaseURIUpdated(string oldURI, string newURI);
@@ -45,6 +47,7 @@ contract PlatwinMEME2 is ERC721, Ownable {
         rpcRouter.spendRPCWithFixedAmountFee(msg.sender);
         _safeMint(to, tokenIndex);
         tokenUri[tokenIndex] = uri;
+        minter[tokenIndex] = msg.sender;
         tokenIndex++;
     }
     /**

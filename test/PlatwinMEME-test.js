@@ -44,6 +44,7 @@ describe("Platwin Meme", function () {
         expect(await meme.balanceOf(user.address)).to.equal(1);
         let tokenId = 0;
         expect(await meme.ownerOf(tokenId)).to.equal(user.address);
+        expect(await meme.minter(tokenId)).to.equal(user.address);
         expect(await meme.tokenIndex()).to.equal(1);
         expect(await meme.tokenURI(tokenId)).to.equal(baseURI + tokenId);
 
@@ -51,6 +52,7 @@ describe("Platwin Meme", function () {
         /// @notice ethers doesn't support invoke overwrite function straightly
         await meme.connect(user)['transferFrom(address,address,uint256)'](user.address, owner.address, tokenId);
         expect(await meme.ownerOf(tokenId)).to.equal(owner.address);
+        expect(await meme.minter(tokenId)).to.equal(user.address);
 
         // pause mint
         await meme.pauseMint(true);
