@@ -39,6 +39,7 @@ contract PlatwinMEME2 is ERC721, Ownable {
         rpcRouter.spendRPCWithFixedAmountFee(msg.sender);
         _mint(to, tokenIndex);
         tokenUri[tokenIndex] = uri;
+        minter[tokenIndex] = msg.sender;
         tokenIndex++;
     }
 

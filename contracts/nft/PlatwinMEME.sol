@@ -45,6 +45,7 @@ contract PlatwinMEME is ERC721, Ownable {
         require(!mintPaused, 'mint paused');
         rpcRouter.spendRPCWithFixedAmountFee(msg.sender);
         _safeMint(to, tokenIndex);
+        minter[tokenIndex] = msg.sender;
         tokenIndex++;
     }
 
