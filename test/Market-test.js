@@ -1,11 +1,10 @@
 const {expect} = require("chai");
 
-// const emptyAddr = ethers.utils.getAddress("0x0000000000000000000000000000000000000000");
+const emptyAddr = ethers.utils.getAddress("0x0000000000000000000000000000000000000000");
 describe('Platwin NFT Market', function () {
-    let rpc, globalBurnRate, globalTaxRate;
+    let testERC20;
     let router;
-    let meme;
-    let batchMeme;
+    let meme2WithoutRPC;
     let owner;
     let user;
     let baseURI = "http://api.platwin.io/v1/meme/";
@@ -13,54 +12,43 @@ describe('Platwin NFT Market', function () {
     let marketState;
     let market, feeRate;
     let tokenId;
-    let batchMemeTokenId = 0;
-    let batchMemeAmount = 100;
     let multiplier = ethers.BigNumber.from('1000000000000000000');
     beforeEach('initialize', async function () {
-        const MockRPC = await ethers.getContractFactory("MockRPC");
-        rpc = await MockRPC.deploy();
-        globalBurnRate = await rpc.globalBurnRate();
-        globalTaxRate = await rpc.globalTaxRate();
-        const RPCRouter = await ethers.getContractFactory("RPCRouter");
-        router = await RPCRouter.deploy(rpc.address);
-        const PlatwinMEME = await ethers.getContractFactory("PlatwinMEME");
-        meme = await PlatwinMEME.deploy(router.address, baseURI);
+        const DealRouter = await ethers.getContractFactory("DealRouter");
+        router = await DealRouter.deploy();
+        const PlatwinMEME2WithoutRPC = await ethers.getContractFactory("PlatwinMEME2WithoutRPC");
+        meme2WithoutRPC = await PlatwinMEME2WithoutRPC.deploy();
         const PlatwinBatchMeme = await ethers.getContractFactory("PlatwinBatchMEME");
         batchMeme = await PlatwinBatchMeme.deploy();
         [owner, user] = await ethers.getSigners();
-        expect(await meme.owner()).to.equal(owner.address);
+        expect(await meme2WithoutRPC.owner()).to.equal(owner.address);
 
         /* deploy market */
         const Market = await ethers.getContractFactory("Market");
         marketLogic = await Market.deploy();
         const MarketProxy = await ethers.getContractFactory("MarketProxy");
-        marketState = await MarketProxy.deploy(marketLogic.address, Buffer.from(''), router.address, rpc.address);
+        marketState = await MarketProxy.deploy(marketLogic.address, Buffer.from(''), router.address);
         market = await Market.attach(marketState.address);
 
-        /* transfer rpc and set fee rate */
-        let amount = ethers.BigNumber.from('100000000000000000000');
-        await rpc.transfer(user.address, amount);
-        await rpc.connect(user).approve(router.address, amount);
-        await rpc.approve(router.address, amount.mul(100));
-        await rpc.approve(market.address, amount.mul(100));
-        // 1%
-        feeRate = ethers.BigNumber.from('10000000000000000');
-        await router.setFixedRateFee(market.address, feeRate, globalBurnRate);
-
-        await router.setFixedAmountFee(meme.address, 0, globalBurnRate);
-        await router.setFixedAmountFee(batchMeme.address, 0, globalBurnRate);
-
         // support NFT
-        await market.setSupportedNFT(meme.address, true);
-        await market.setSupportedNFT(batchMeme.address, true);
-        expect(await market.supportedNFT(meme.address)).to.equal(true);
-        expect(await market.supportedNFT(batchMeme.address)).to.equal(true);
+        await market.setSupportedNFT(meme2WithoutRPC.address, true);
+        expect(await market.supportedNFT(meme2WithoutRPC.address)).to.equal(true);
         // mint nft first
-        tokenId = await meme.tokenIndex();
-        await meme.connect(user).mint(user.address);
-        await meme.connect(user).approve(market.address, tokenId);
-        await batchMeme.mint(user.address, batchMemeTokenId, batchMemeAmount, Buffer.from(''));
-        await batchMeme.connect(user).setApprovalForAll(market.address, true);
+        tokenId = await meme2WithoutRPC.tokenIndex();
+        await meme2WithoutRPC.connect(user).mint(user.address, baseURI);
+        await meme2WithoutRPC.connect(user).approve(market.address, tokenId);
+        /* set router */
+        // 1%
+        feeRate = multiplier.div(100);
+        await router.setFixedRateFee(market.address, feeRate);
+
+        /* testERC20 */
+        const TestERC20 = await ethers.getContractFactory("TestERC20");
+        testERC20 = await TestERC20.deploy();
+        let amount = multiplier.mul(1000);
+        await testERC20.transfer(user.address, amount);
+        await testERC20.approve(router.address, amount.mul(100));
+        await testERC20.connect(user).approve(router.address, amount.mul(100));
     });
     it('ERC721 one price order', async function () {
         /* make order */
@@ -68,14 +56,16 @@ describe('Platwin NFT Market', function () {
         let maxPrice = minPrice;
         let startBlock = ethers.BigNumber.from(await network.provider.send('eth_blockNumber')).add(1);
         let duration = 10;
-        await market.connect(user).makeOrder(true, meme.address, tokenId, 1, minPrice, maxPrice, startBlock, duration);
+        await market.connect(user).makeOrder(true, meme2WithoutRPC.address, tokenId, 1, testERC20.address, minPrice,
+            maxPrice, startBlock, duration);
         let orderId = await market.ordersNum();
         let order = await market.orders(orderId);
         expect(order.status).to.equal(0);
         expect(order.tokenId).to.equal(tokenId);
-        expect(order.nft).to.equal(meme.address);
+        expect(order.nft).to.equal(meme2WithoutRPC.address);
         expect(order.is721).to.equal(true);
         expect(order.seller).to.equal(user.address);
+        expect(order.sellToken).to.equal(testERC20.address);
         expect(order.initAmount).to.equal(1);
         expect(order.minPrice).to.equal(minPrice);
         expect(order.maxPrice).to.equal(maxPrice);
@@ -85,17 +75,17 @@ describe('Platwin NFT Market', function () {
         expect(order.finalPrice).to.equal(0);
         let buyers = await market.orderBuyers(orderId);
         expect(buyers.length).to.equal(0);
-        expect(await meme.ownerOf(order.tokenId)).to.equal(market.address);
+        expect(await meme2WithoutRPC.ownerOf(order.tokenId)).to.equal(market.address);
 
         /* take order */
         let amountOut = order.amount;
-        let buyerBalanceBefore = await rpc.balanceOf(owner.address);
-        let sellerBalanceBefore = await rpc.balanceOf(user.address);
-        let feeBalanceBefore = await rpc.balanceOf(router.address);
+        let buyerBalanceBefore = await testERC20.balanceOf(owner.address);
+        let sellerBalanceBefore = await testERC20.balanceOf(user.address);
+        let feeBalanceBefore = await testERC20.balanceOf(router.address);
         await market.takeOrder(orderId, amountOut);
-        let buyerBalanceAfter = await rpc.balanceOf(owner.address);
-        let sellerBalanceAfter = await rpc.balanceOf(user.address);
-        let feeBalanceAfter = await rpc.balanceOf(router.address);
+        let buyerBalanceAfter = await testERC20.balanceOf(owner.address);
+        let sellerBalanceAfter = await testERC20.balanceOf(user.address);
+        let feeBalanceAfter = await testERC20.balanceOf(router.address);
         // check order status
         order = await market.orders(orderId);
         expect(order.status).to.equal(2);
@@ -105,24 +95,24 @@ describe('Platwin NFT Market', function () {
         expect(buyers[0]).to.equal(owner.address);
 
         // check asset
-        expect(await meme.ownerOf(order.tokenId)).to.equal(owner.address);
+        expect(await meme2WithoutRPC.ownerOf(order.tokenId)).to.equal(owner.address);
         let buyerBalanceChange = buyerBalanceBefore.sub(buyerBalanceAfter);
         let sellerBalanceChange = sellerBalanceAfter.sub(sellerBalanceBefore);
         let feeBalanceChange = feeBalanceAfter.sub(feeBalanceBefore);
         let volume = order.finalPrice;
-        let burned = volume.mul(globalBurnRate).div(multiplier);
-        let tax = volume.sub(burned).mul(globalTaxRate).div(multiplier);
-        expect(feeBalanceChange).to.equal(volume.sub(burned).sub(tax).mul(feeRate).div(multiplier));
-        expect(buyerBalanceChange).to.equal(volume.sub(tax)); // buyer is RPC.taxTo
-        expect(feeBalanceChange.add(sellerBalanceChange)).to.equal(buyerBalanceChange.sub(burned));
+        let fee = volume.mul(feeRate).div(multiplier);
+        expect(feeBalanceChange).to.equal(fee);
+        expect(buyerBalanceChange).to.equal(volume);
+        expect(sellerBalanceChange).to.equal(volume.sub(fee));
     });
-    it('ERC721 Dutch auction', async function () {
+    it('ERC721 Dutch auction(sell token is ETH)', async function () {
         /* make order */
         let minPrice = ethers.BigNumber.from('100000000000000000000');
         let maxPrice = minPrice.mul(2);
         let startBlock = ethers.BigNumber.from(await network.provider.send('eth_blockNumber')).add(1);
         let duration = 10;
-        await market.connect(user).makeOrder(true, meme.address, tokenId, 1, minPrice, maxPrice, startBlock, duration);
+        await market.connect(user).makeOrder(true, meme2WithoutRPC.address, tokenId, 1, emptyAddr, minPrice, maxPrice,
+            startBlock, duration);
         let orderId = await market.ordersNum();
         let order = await market.orders(orderId);
         expect(await market.getPrice(orderId)).to.equal(order.maxPrice);
@@ -146,13 +136,15 @@ describe('Platwin NFT Market', function () {
         let priceExecuted = order.maxPrice.sub(order.maxPrice.sub(order.minPrice).mul(height.add(1).sub(order.startBlock))
             .div(order.duration));
         let amountOut = order.amount;
-        let buyerBalanceBefore = await rpc.balanceOf(owner.address);
-        let sellerBalanceBefore = await rpc.balanceOf(user.address);
-        let feeBalanceBefore = await rpc.balanceOf(router.address);
-        await market.takeOrder(orderId, amountOut);
-        let buyerBalanceAfter = await rpc.balanceOf(owner.address);
-        let sellerBalanceAfter = await rpc.balanceOf(user.address);
-        let feeBalanceAfter = await rpc.balanceOf(router.address);
+        let provider = await ethers.provider;
+        let buyerBalanceBefore = await provider.getBalance(owner.address);
+        let sellerBalanceBefore = await provider.getBalance(user.address);
+        let feeBalanceBefore = await provider.getBalance(router.address);
+        let tx = await market.takeOrder(orderId, amountOut, {value: priceExecuted});
+        let txReceipt = await tx.wait();
+        let buyerBalanceAfter = await provider.getBalance(owner.address);
+        let sellerBalanceAfter = await provider.getBalance(user.address);
+        let feeBalanceAfter = await provider.getBalance(router.address);
         // check order status
         order = await market.orders(orderId);
         expect(order.status).to.equal(2);
@@ -162,16 +154,15 @@ describe('Platwin NFT Market', function () {
         expect(buyers[0]).to.equal(owner.address);
 
         // check asset
-        expect(await meme.ownerOf(order.tokenId)).to.equal(owner.address);
+        expect(await meme2WithoutRPC.ownerOf(order.tokenId)).to.equal(owner.address);
         let buyerBalanceChange = buyerBalanceBefore.sub(buyerBalanceAfter);
         let sellerBalanceChange = sellerBalanceAfter.sub(sellerBalanceBefore);
         let feeBalanceChange = feeBalanceAfter.sub(feeBalanceBefore);
         let volume = priceExecuted;
-        let burned = volume.mul(globalBurnRate).div(multiplier);
-        let tax = volume.sub(burned).mul(globalTaxRate).div(multiplier);
-        expect(feeBalanceChange).to.equal(volume.sub(burned).sub(tax).mul(feeRate).div(multiplier));
-        expect(buyerBalanceChange).to.equal(volume.sub(tax)); // buyer is RPC.taxTo
-        expect(feeBalanceChange.add(sellerBalanceChange)).to.equal(buyerBalanceChange.sub(burned));
+        let fee = volume.mul(feeRate).div(multiplier);
+        expect(feeBalanceChange).to.equal(fee);
+        expect(sellerBalanceChange).to.equal(volume.sub(fee));
+        expect(buyerBalanceChange).to.equal(volume.add(tx.gasPrice.mul(txReceipt.gasUsed)));
 
         /* revert take order and fast forward enough block */
         await network.provider.send('evm_revert', [snapshot]);
@@ -183,11 +174,11 @@ describe('Platwin NFT Market', function () {
             await network.provider.send('evm_mine');
         }
         expect(await market.getPrice(orderId)).to.equal(order.minPrice);
-        await market.takeOrder(orderId, amountOut);
+        await expect(market.takeOrder(orderId, amountOut)).revertedWith('not enough');
         // check order status
         order = await market.orders(orderId);
-        expect(order.status).to.equal(2);
-        expect(order.finalPrice).to.equal(order.minPrice);
+        expect(order.status).to.equal(0);
+        expect(order.finalPrice).to.equal(0);
     });
     it('cancel ERC721 order', async function () {
         /* make order */
@@ -195,15 +186,16 @@ describe('Platwin NFT Market', function () {
         let maxPrice = minPrice.mul(2);
         let startBlock = ethers.BigNumber.from(await network.provider.send('eth_blockNumber')).add(1);
         let duration = 10;
-        await market.connect(user).makeOrder(true, meme.address, tokenId, 1, minPrice, maxPrice, startBlock, duration);
+        await market.connect(user).makeOrder(true, meme2WithoutRPC.address, tokenId, 1, testERC20.address,
+            minPrice, maxPrice, startBlock, duration);
         let orderId = await market.ordersNum();
         let order = await market.orders(orderId);
-        expect(await meme.ownerOf(order.tokenId)).to.equal(market.address);
+        expect(await meme2WithoutRPC.ownerOf(order.tokenId)).to.equal(market.address);
         // snapshot
         let snapshot = await network.provider.send('evm_snapshot');
         // cancel order
         await market.connect(user).cancelOrder(orderId);
-        expect(await meme.ownerOf(order.tokenId)).to.equal(user.address);
+        expect(await meme2WithoutRPC.ownerOf(order.tokenId)).to.equal(user.address);
         order = await market.orders(orderId);
         expect(order.status).to.equal(4);
         expect(order.amount).to.equal(0);
@@ -219,84 +211,5 @@ describe('Platwin NFT Market', function () {
         expect(order.status).to.equal(2);
         // cannot cancel SOLD order
         await expect(market.connect(user).cancelOrder(orderId)).to.be.revertedWith('illegal order status');
-    });
-    it('ERC1155 partially sold order', async function () {
-        /* make order */
-        let minPrice = ethers.BigNumber.from('100000000000000000000');
-        let maxPrice = minPrice.mul(2);
-        let startBlock = ethers.BigNumber.from(await network.provider.send('eth_blockNumber')).add(1);
-        let duration = 10;
-        let orderAmount = 20;
-        await market.connect(user).makeOrder(false, batchMeme.address, batchMemeTokenId, orderAmount, minPrice,
-            maxPrice, startBlock, duration);
-        // check asset
-        expect(await batchMeme.balanceOf(market.address, batchMemeTokenId)).to.equal(orderAmount);
-        expect(await batchMeme.balanceOf(user.address, batchMemeTokenId)).to.equal(batchMemeAmount - orderAmount);
-
-        /* take order */
-        let orderId = await market.ordersNum();
-        let takeAmount = orderAmount / 2;
-        let buyerBalanceBefore = await rpc.balanceOf(owner.address);
-        let sellerBalanceBefore = await rpc.balanceOf(user.address);
-        let feeBalanceBefore = await rpc.balanceOf(router.address);
-        await market.takeOrder(orderId, takeAmount);
-        let buyerBalanceAfter = await rpc.balanceOf(owner.address);
-        let sellerBalanceAfter = await rpc.balanceOf(user.address);
-        let feeBalanceAfter = await rpc.balanceOf(router.address);
-        // check asset
-        expect(await batchMeme.balanceOf(market.address, batchMemeTokenId)).to.equal(orderAmount - takeAmount);
-        expect(await batchMeme.balanceOf(owner.address, batchMemeTokenId)).to.equal(takeAmount);
-        let buyerBalanceChange = buyerBalanceBefore.sub(buyerBalanceAfter);
-        let sellerBalanceChange = sellerBalanceAfter.sub(sellerBalanceBefore);
-        let feeBalanceChange = feeBalanceAfter.sub(feeBalanceBefore);
-        let order = await market.orders(orderId);
-        let height = ethers.BigNumber.from(await network.provider.send('eth_blockNumber'));
-        let priceExecuted = order.maxPrice.sub(order.maxPrice.sub(order.minPrice).mul(height.sub(order.startBlock))
-            .div(order.duration));
-        let volume = priceExecuted.mul(takeAmount);
-        let burned = volume.mul(globalBurnRate).div(multiplier);
-        let tax = volume.sub(burned).mul(globalTaxRate).div(multiplier);
-        expect(feeBalanceChange).to.equal(volume.sub(burned).sub(tax).mul(feeRate).div(multiplier));
-        expect(buyerBalanceChange).to.equal(volume.sub(tax));
-        expect(feeBalanceChange.add(sellerBalanceChange)).to.equal(buyerBalanceChange.sub(burned));
-        // check order status
-        expect(order.status).to.equal(1);
-        expect(order.amount).to.equal(orderAmount - takeAmount);
-        expect(order.finalPrice).to.equal(0);
-        let buyers = await market.orderBuyers(orderId);
-        expect(buyers.length).to.equal(1);
-        expect(buyers[0]).to.equal(owner.address);
-
-        /* SOLD and check finalPrice */
-        let snapshot = await network.provider.send('evm_snapshot');
-        await market.takeOrder(orderId, takeAmount);
-        height = ethers.BigNumber.from(await network.provider.send('eth_blockNumber'));
-        priceExecuted = order.maxPrice.sub(order.maxPrice.sub(order.minPrice).mul(height.sub(order.startBlock))
-            .div(order.duration));
-        order = await market.orders(orderId);
-        expect(order.status).to.equal(2);
-        expect(order.amount).to.equal(0);
-        expect(order.finalPrice).to.equal(priceExecuted);
-        buyers = await market.orderBuyers(orderId);
-        expect(buyers.length).to.equal(2);
-        expect(buyers[1]).to.equal(owner.address);
-
-        /* revert second takeOrder, cancel order */
-        await network.provider.send('evm_revert', [snapshot]);
-        await market.connect(user).cancelOrder(orderId);
-        // check order status
-        order = await market.orders(orderId);
-        expect(order.status).to.equal(3);
-        expect(order.amount).to.equal(0);
-        expect(order.finalPrice).to.equal(0);
-        buyers = await market.orderBuyers(orderId);
-        expect(buyers.length).to.equal(1);
-        expect(buyers[0]).to.equal(owner.address);
-    });
-    it('market upgrade', async function () {
-        const Market = await ethers.getContractFactory("Market");
-        marketLogic = await Market.deploy();
-        await marketState.updateTo(marketLogic.address);
-        expect(await marketState.implementation()).to.equal(marketLogic.address);
     });
 });

@@ -6,7 +6,7 @@ import '@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 import '@openzeppelin/contracts/token/ERC1155/IERC1155.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import {IRPCRouter} from '../RPCRouter.sol';
+import {DealRouterInterface} from '../DealRouter.sol';
 import {MarketState}from './MarketState.sol';
 
 contract Market is IERC721Receiver, IERC1155Receiver, MarketState {
@@ -19,7 +19,7 @@ contract Market is IERC721Receiver, IERC1155Receiver, MarketState {
     event TakeOrder(uint orderId, address buyer, address nft, uint tokenId, uint amount, uint rpcAmount);
     event CancelOrder(uint orderId, address nft, uint tokenId, uint remains);
 
-    constructor()MarketState(IRPCRouter(address(0)), IERC20(address(0))){
+    constructor()MarketState(DealRouterInterface(address(0))){
     }
 
     function setSupportedNFT(address nft, bool supported) public onlyOwner {
@@ -28,8 +28,8 @@ contract Market is IERC721Receiver, IERC1155Receiver, MarketState {
     }
 
     /// return order id
-    function makeOrder(bool is721, address nft, uint tokenId, uint tokenAmount, uint minPrice, uint maxPrice,
-        uint startBlock, uint duration)
+    function makeOrder(bool is721, address nft, uint tokenId, uint tokenAmount, IERC20 sellToken, uint minPrice,
+        uint maxPrice, uint startBlock, uint duration)
     public returns (uint){
         // check nft supported
         require(supportedNFT[nft], 'unsupported NFT');
@@ -46,13 +46,13 @@ contract Market is IERC721Receiver, IERC1155Receiver, MarketState {
         }
         // record order
         ordersNum++;
-        orders[ordersNum] = Order(OrderStatus.INIT, tokenId, nft, is721, msg.sender, tokenAmount, minPrice, maxPrice,
-            startBlock, duration, tokenAmount, 0, new address[](0));
+        orders[ordersNum] = Order(OrderStatus.INIT, tokenId, nft, is721, msg.sender, sellToken, tokenAmount, minPrice,
+            maxPrice, startBlock, duration, tokenAmount, 0, new address[](0));
         emit MakeOrder(ordersNum, msg.sender, nft, tokenId, tokenAmount);
         return ordersNum;
     }
 
-    function takeOrder(uint orderId, uint amountOut) public returns (bool){
+    function takeOrder(uint orderId, uint amountOut) public payable returns (bool){
         Order storage order = orders[orderId];
         // check order
         require(amountOut <= order.amount, 'insufficient amountOut');
@@ -60,8 +60,9 @@ contract Market is IERC721Receiver, IERC1155Receiver, MarketState {
         require(order.status == OrderStatus.INIT || order.status == OrderStatus.PARTIAL_SOLD, 'illegal order status');
         // transfer asset in
         uint price = getPrice(orderId);
-        uint rpcAmount = price * amountOut;
-        rpcRouter.spendRPCWithFixedRateFee(msg.sender, order.seller, rpcAmount);
+        uint dealAmount = price * amountOut;
+        dealRouter.dealWithFixedRateFee{value : msg.value}(order.sellToken, payable(msg.sender), payable(order.seller),
+            dealAmount);
         // transfer nft out
         if (order.is721) {
             IERC721(order.nft).safeTransferFrom(address(this), msg.sender, order.tokenId);
@@ -77,7 +78,7 @@ contract Market is IERC721Receiver, IERC1155Receiver, MarketState {
             order.status = OrderStatus.PARTIAL_SOLD;
         }
         order.buyers.push(msg.sender);
-        emit TakeOrder(orderId, msg.sender, order.nft, order.tokenId, amountOut, rpcAmount);
+        emit TakeOrder(orderId, msg.sender, order.nft, order.tokenId, amountOut, dealAmount);
         return true;
     }
 

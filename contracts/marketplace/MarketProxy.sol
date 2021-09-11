@@ -7,8 +7,8 @@ import './MarketState.sol';
 /// @notice instead of using the admin at ERC1967Proxy, we use the owner at MarketState.Ownable for the convenience
 contract MarketProxy is MarketState, ERC1967Proxy {
 
-    constructor(address _logic, bytes memory data, IRPCRouter router, IERC20 rpc)
-    ERC1967Proxy(_logic, data) MarketState(router, rpc){
+    constructor(address _logic, bytes memory data, DealRouterInterface router)
+    ERC1967Proxy(_logic, data) MarketState(router){
     }
 
     function updateTo(address newImplementation) public onlyOwner {

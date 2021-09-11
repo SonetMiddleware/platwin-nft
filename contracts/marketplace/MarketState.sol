@@ -3,11 +3,10 @@ pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import {IRPCRouter} from '../RPCRouter.sol';
+import {DealRouterInterface} from '../DealRouter.sol';
 
 contract MarketState is Ownable {
-    IRPCRouter public rpcRouter;
-    IERC20 public RPC;
+    DealRouterInterface public dealRouter;
 
     enum OrderStatus{INIT, PARTIAL_SOLD, SOLD, PARTIAL_SOLD_CANCELED, CANCELED}
 
@@ -18,6 +17,7 @@ contract MarketState is Ownable {
         bool is721;
 
         address seller;
+        IERC20 sellToken;
         uint initAmount;
         uint minPrice;
         uint maxPrice;
@@ -34,8 +34,7 @@ contract MarketState is Ownable {
 
     mapping(address => bool) public supportedNFT;
 
-    constructor(IRPCRouter router, IERC20 rpc)Ownable(){
-        rpcRouter = router;
-        RPC = rpc;
+    constructor(DealRouterInterface router)Ownable(){
+        dealRouter = router;
     }
 }
