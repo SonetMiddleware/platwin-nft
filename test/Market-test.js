@@ -18,8 +18,6 @@ describe('Platwin NFT Market', function () {
         router = await DealRouter.deploy();
         const PlatwinMEME2WithoutRPC = await ethers.getContractFactory("PlatwinMEME2WithoutRPC");
         meme2WithoutRPC = await PlatwinMEME2WithoutRPC.deploy();
-        const PlatwinBatchMeme = await ethers.getContractFactory("PlatwinBatchMEME");
-        batchMeme = await PlatwinBatchMeme.deploy();
         [owner, user] = await ethers.getSigners();
         expect(await meme2WithoutRPC.owner()).to.equal(owner.address);
 
