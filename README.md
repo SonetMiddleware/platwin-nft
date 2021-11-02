@@ -2,7 +2,7 @@
 
 ## Notice
 
-- payment(from, to, amount, burnRate, feeRate):
+- paymentWithRPC(from, to, amount, burnRate, feeRate):
     - balanceBefore = RPC.balanceOf(RPCRouter);
     - RPC.spend(from, RPCRouter, amount, burnRate);
     - balanceAfter = RPC.balanceOf(RPCRouter);
