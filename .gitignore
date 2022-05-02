@@ -108,3 +108,6 @@ artifacts
 cache
 .env.json
 airdrop-data
+
+# OpenZeppelin
+unknown-31337.json

@@ -1,4 +1,5 @@
 require("@nomiclabs/hardhat-waffle");
+require('@openzeppelin/hardhat-upgrades');
 const env = require('./.env.json');
 
 INFURO_API_KEY = env.INFURO;
