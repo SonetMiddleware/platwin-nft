@@ -31,3 +31,7 @@
   DAORegistry: '0x9a7e176576abb82496e6b3791E15Bea08ecc723e'
 }
 ```
+
+## TODO
+
+- use collection to replace nft when create dao, because one collection could include many nft
