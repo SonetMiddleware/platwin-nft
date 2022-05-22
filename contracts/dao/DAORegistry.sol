@@ -6,11 +6,6 @@ import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 
 contract DAORegistry is OwnableUpgradeable {
 
-    /// deprecated
-    mapping(IERC721 => bool) public whitelist;
-    /// deprecated
-    mapping(IERC721 => bool) public daoList;
-
     mapping(string => bool) public collectionDaoList;
 
     event CreateDAO(string collectionSlug, string name, string facebook, string twitter);

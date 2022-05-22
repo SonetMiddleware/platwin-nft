@@ -35,9 +35,7 @@ async function main() {
     console.log('router config market fee');
 
     let market = await Market.attach(marketState.address);
-    await market.setSupportedNFT('0xadDCa5C98b0fB6F8F9b4324D9f97F9Da55cbc3B2', true);
-    await market.setSupportedNFT('0x917be393EeF337f280eF2000430F16c1340CAcAd', true);
-    await market.setSupportedNFT('0x7c19f2eb9e4524D5Ef5114Eb646583bB0Bb6C8F8', true);
+    await market.setSupportedNFT('0x4b2b1f6f2accf4bcdd53fc65e1e4a4ef2b289399', true);
     await market.setSupportedNFT(meme2WithoutRPC.address, true);
     console.log('market supported MEME, MEME2, BatchMEME, PlatwinMEME2WithoutRPC');
 
