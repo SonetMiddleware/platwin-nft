@@ -3,6 +3,7 @@ require('@openzeppelin/hardhat-upgrades');
 const env = require('./.env.json');
 
 INFURO_API_KEY = env.INFURO;
+ALCHEMY_API_KEY = env.ALCHEMY;
 
 PRIV_1 = env.PRIVATE_KEY_1;
 PRIV_2 = env.PRIVATE_KEY_2;
@@ -27,6 +28,10 @@ module.exports = {
         },
         kovan: {
             url: `https://kovan.infura.io/v3/${INFURO_API_KEY}`,
+            accounts: [`0x${PRIV_1}`]
+        },
+        rinkeby: {
+            url: `https://eth-rinkeby.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
             accounts: [`0x${PRIV_1}`]
         },
         bsc_testnet: {

@@ -33,5 +33,3 @@
 ```
 
 ## TODO
-
-- use collection to replace nft when create dao, because one collection could include many nft

@@ -402,6 +402,119 @@
           }
         }
       }
+    },
+    "a0b266024a4a1232b9e08e56fc306ec2fafbb4a77ddebcc04781096c786eac34": {
+      "address": "0x23aa3E7C29120704C2F5d79d14C4Fc1D3ff03aF5",
+      "txHash": "0xab8d62d1f8c777ce0a2ba453e7dc6eb7619c170cd34e26c8da3713db5f65a2c8",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:39"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:44"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:87"
+          },
+          {
+            "label": "whitelist",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_mapping(t_contract(IERC721)4104,t_bool)",
+            "contract": "DAORegistry",
+            "src": "contracts/dao/DAORegistry.sol:10"
+          },
+          {
+            "label": "daoList",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_mapping(t_contract(IERC721)4104,t_bool)",
+            "contract": "DAORegistry",
+            "src": "contracts/dao/DAORegistry.sol:12"
+          },
+          {
+            "label": "collectionDaoList",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_mapping(t_string_memory_ptr,t_bool)",
+            "contract": "DAORegistry",
+            "src": "contracts/dao/DAORegistry.sol:14"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(IERC721)4104": {
+            "label": "contract IERC721",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_contract(IERC721)4104,t_bool)": {
+            "label": "mapping(contract IERC721 => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_string_memory_ptr,t_bool)": {
+            "label": "mapping(string => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_string_memory_ptr": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string"
+          }
+        }
+      }
     }
   }
 }
