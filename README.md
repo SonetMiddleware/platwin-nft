@@ -32,4 +32,12 @@
 }
 ```
 
+### mainnet
+
+```
+{
+  DAORegistry: '0x1443D92E71eFADE956Aa0198F7EC5eeb6d5f2E0F'
+}
+```
+
 ## TODO
