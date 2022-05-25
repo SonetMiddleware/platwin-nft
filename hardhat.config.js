@@ -22,6 +22,11 @@ module.exports = {
         }
     },
     networks: {
+        mainnet: {
+            url: `https://mainnet.infura.io/v3/${INFURO_API_KEY}`,
+            accounts: [`0x${PRIV_1}`],
+            timeout: 10 * 60 * 1000
+        },
         ropsten: {
             url: `https://ropsten.infura.io/v3/${INFURO_API_KEY}`,
             accounts: [`0x${PRIV_1}`]
@@ -41,7 +46,6 @@ module.exports = {
         mumbai: {
             url: 'https://matic-mumbai.chainstacklabs.com',
             accounts: [`0x${PRIV_1}`, `0x${PRIV_2}`, `0x${PRIV_3}`],
-            gasPrice: 5600000000
         }
     }
 };
