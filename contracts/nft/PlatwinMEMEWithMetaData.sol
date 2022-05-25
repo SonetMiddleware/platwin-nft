@@ -19,7 +19,7 @@ contract PlatwinMEMEWithMetaData is ERC721, Ownable {
     event MintPaused(bool paused);
     event BaseURIUpdated(string oldURI, string newURI);
 
-    constructor()ERC721("Platwin MEME With Metadata", "PLATWIN-MEME-2") Ownable(){
+    constructor()ERC721("Platwin MEME With Metadata", "PLATWIN-MEME") Ownable(){
     }
 
     function pauseMint(bool paused) public onlyOwner {
@@ -48,7 +48,7 @@ contract PlatwinMEMEWithMetaData is ERC721, Ownable {
      * @dev See {IERC721Metadata-tokenURI}.
      */
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
-        string memory meta = '{"name":"Platwin MEME With Metadata","description":"Platwin MEME for Test","image":"https://ipfs.io/ipfs/';
+        string memory meta = '{"name":"Platwin MEME With Metadata","description":"Platwin MEME","image":"https://ipfs.io/ipfs/';
         return string(abi.encodePacked(meta, imgUri[tokenId],'"}'));
     }
 }
