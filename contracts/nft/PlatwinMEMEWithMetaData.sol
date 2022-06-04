@@ -19,7 +19,7 @@ contract PlatwinMEMEWithMetaData is ERC721, Ownable {
     event MintPaused(bool paused);
     event BaseURIUpdated(string oldURI, string newURI);
 
-    constructor()ERC721("Platwin MEME With Metadata", "PLATWIN-MEME") Ownable(){
+    constructor()ERC721("Platwin MEME With Metadata", "PLATWIN-MEME-2") Ownable(){
     }
 
     function pauseMint(bool paused) public onlyOwner {

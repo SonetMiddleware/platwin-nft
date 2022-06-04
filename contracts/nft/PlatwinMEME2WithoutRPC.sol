@@ -49,6 +49,6 @@ contract PlatwinMEME2WithoutRPC is ERC721, Ownable {
      * @dev See {IERC721Metadata-tokenURI}.
      */
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
-        return tokenUri[tokenId];
+        return string(abi.encodePacked('ipfs://', tokenUri[tokenId]));
     }
 }

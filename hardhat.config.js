@@ -27,6 +27,10 @@ module.exports = {
             accounts: [`0x${PRIV_1}`],
             timeout: 10 * 60 * 1000
         },
+        polygon: {
+            url: 'https://polygon-rpc.com',
+            accounts: [`0x${PRIV_1}`]
+        },
         ropsten: {
             url: `https://ropsten.infura.io/v3/${INFURO_API_KEY}`,
             accounts: [`0x${PRIV_1}`]
