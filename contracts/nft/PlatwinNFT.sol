@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 
-/// @dev MEME is Platwin NFT example, maybe some emoji, some cop?
 /// @dev use IPFS to store NFT resource, so we specify uri when user mint nft
 contract PlatwinNFT is ERC721, Ownable {
 
@@ -44,8 +43,6 @@ contract PlatwinNFT is ERC721, Ownable {
         emit BaseURIUpdated(old, base);
     }
 
-    /// @notice everyone could mint Platwin MEME
-    /// @notice we use a simple auto-increment tokenId
     function mint(address to, string memory uri) public inWhitelist(msg.sender) {
         _mint(to, tokenIndex);
         tokenUri[tokenIndex] = uri;
