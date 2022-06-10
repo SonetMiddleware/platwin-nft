@@ -30,6 +30,7 @@ contract PlatwinNFT is ERC721, Ownable {
     constructor()ERC721("Platwin NFT", "PLATWIN-NFT") Ownable(){
         whitelist[msg.sender] = true;
         baseURI = "ipfs://";
+        tokenIndex = 1;
     }
 
     function setWhitelist(address who, bool enabled) public onlyOwner {
